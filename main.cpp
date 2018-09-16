@@ -11,49 +11,26 @@
 #include "NeuralNet.hpp"
 #include "dataParser.h"
 
-int main(int argc, const char * argv[]) {
-   NeuralNet nn(2,4,1);
-   nn.setLearningRate(.65);
-   std::vector< std::vector<double> > xorInputSet;
-   xorInputSet.push_back({0,0});
-   xorInputSet.push_back({1,0});
-   xorInputSet.push_back({1,1});
-   xorInputSet.push_back({0,1});
-   std::vector< std::vector<double> > xorTargetSet;
-   xorTargetSet.push_back({0});
-   xorTargetSet.push_back({1});
-   xorTargetSet.push_back({0});
-   xorTargetSet.push_back({1});
+int main(int argc, const char * argv[])
+{
+    NeuralNet nn(784,10,10);
+    Matrix<double> dataMatrix = returnMatrixData("/home/edgar/Desktop/neuralnet/data0");
+    std::vector<double> zeroes(10,0);
+    zeroes[0] = 1;
+    Matrix<double> outputs = Matrix<double>::makeMatrixFromVec({zeroes});
+    for(int j = 0; j < 10; j++) {
+        for (int i = 0; i < 1000; i++) {
 
-   Matrix<double> xorMatrixInput;
-   Matrix<double> xorMatrixTarget;
 
-   try
-   {
-        xorMatrixInput = Matrix<double>::makeMatrixFromVec(xorInputSet);
-        xorMatrixTarget = Matrix<double>::makeMatrixFromVec(xorTargetSet);
-   }
-   catch(std::invalid_argument& a)
-   {
-        std::cerr << a.what() << std::endl;
-   }
-   for(int j = 0; j < 10000; j++)
-   {
-        for(int i = 0; i < 4; i++)
-        {
-            std::cout << "Training..." << std::endl;
-            Matrix<double> inputT = xorMatrixInput[i];
-            Matrix<double> targetT = xorMatrixTarget[i];
-            nn.feedForward(inputT);
-            nn.learn(inputT,targetT);
+            Matrix<double> oneRow = dataMatrix[i];
+            nn.feedForward(oneRow);
+            nn.learn(oneRow, outputs);
         }
     }
-    Matrix<double> testData = xorMatrixInput[1];
+
+    Matrix<double> testData = dataMatrix[1];
     Matrix<double> prediction = nn.feedForward(testData);
     prediction.print();
-   //  Matrix<double> output = Matrix<double>::columnVector(test);
-   //  Matrix<double> testOutput = nn.predict(output);
-   //  testOutput.print();
-
     return 0;
+
 }

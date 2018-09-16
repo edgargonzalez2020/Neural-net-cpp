@@ -222,8 +222,8 @@ template <typename T>
 void Matrix<T>::redefineInternalMatrix(const std::vector<std::vector<T> >& a)
 {
     // error check dimensions
-    int row = static_cast<int>(a.size());
-    int col = static_cast<int>(a[0].size());
+    auto row = static_cast<int>(a.size());
+    auto col = static_cast<int>(a[0].size());
     this->setRows(row);
     this->setColumns(col);
     this->internalMatrix = a;
@@ -329,7 +329,7 @@ void Matrix<T>::randomize()
 	  for(int j = 0; j < this->columns; j++)
 	  {
 	  	T randomNum;
-	  	std::uniform_real_distribution<T> dist(0,1);
+	  	std::uniform_real_distribution<T> dist(0, 1);
 		randomNum = dist(mt);
 	    this->internalMatrix[i][j] = randomNum;
 	  }
@@ -377,8 +377,8 @@ Matrix<T> Matrix<T>::makeMatrixFromVec(const std::vector<std::vector<T> >& refVe
 {
     if(!refVec.empty())
     {
-        int columnSize = static_cast<int>(refVec[0].size());
-        int rowSize = static_cast<int>(refVec.size());
+        auto columnSize = static_cast<int>(refVec[0].size());
+        auto rowSize = static_cast<int>(refVec.size());
         Matrix<T> temp(rowSize,columnSize);
         for(int i = 0; i < rowSize; i++)
         {

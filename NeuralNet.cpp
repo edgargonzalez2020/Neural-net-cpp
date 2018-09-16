@@ -7,7 +7,6 @@
 //
 
 #include "NeuralNet.hpp"
-#include <stdio.h>
  NeuralNet::NeuralNet(int inputNodesA, int hiddenNodesA, int outputNodesA)
 {
 	
@@ -47,7 +46,7 @@ std::function<double (double)> NeuralNet::returnSigmoidFunction()
 std::function<double (double)> NeuralNet::returnDsigmoidFunction()
 {
     std::function<double (double)> dSigmoidFnc;
-    dSigmoidFnc = [](double x) ->double{return x * (1 - x);} ;
+    dSigmoidFnc = [](double x) ->double{return exp(-x)/(pow(1+exp(-x),2));} ;
     return dSigmoidFnc;
 }
 // refactor training method by dividing work into seperate methods
