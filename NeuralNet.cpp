@@ -122,14 +122,14 @@ void NeuralNet::train(Matrix<double> &input,Matrix<double> &targets)
 //     return outputs;
 // }
 
-Matrix<double> NeuralNet::feedForward(Matrix<double>& inputs)
+Matrix<double> NeuralNet::feedForward(const Matrix<double>& inputs)
 {
     std::function<double (double)> sigmoidFunction = returnSigmoidFunction();
-    this->H = Matrix<double>::multiply(inputs, this->weights_input_hidden);
+    this->H = Matrix<double>::dot(inputs, this->weights_input_hidden);
     H.elementWiseAddMatrix(this->biasHidden);
     H.map(sigmoidFunction);
 
-    this->Y = Matrix<double>::multiply(H, this->weights_hidden_output);
+    this->Y = Matrix<double>::dot(H, this->weights_hidden_output);
     Y.elementWiseAddMatrix(this->biasOutput);
     Y.map(sigmoidFunction);
 	return Y;
@@ -140,7 +140,7 @@ void NeuralNet::learn(Matrix<double>& input,Matrix<double>& outputs)
 
 
     Matrix<double> DJdb2 = Matrix<double>::subtract(this->Y, outputs);
-    Matrix<double> temp = Matrix<double>::multiply(this->H, this->weights_hidden_output);
+    Matrix<double> temp = Matrix<double>::dot(this->H, this->weights_hidden_output);
     temp.elementWiseAddMatrix(this->biasOutput);
     temp.map(sigmoidFunction);
     DJdb2.elementWiseMultiplyMatrix(temp);
@@ -148,19 +148,19 @@ void NeuralNet::learn(Matrix<double>& input,Matrix<double>& outputs)
 
 
     Matrix<double> weightT = Matrix<double>::transpose(this->weights_hidden_output);
-    Matrix<double> temp2 = Matrix<double>::multiply(input,this->weights_input_hidden);
+    Matrix<double> temp2 = Matrix<double>::dot(input,this->weights_input_hidden);
     temp2.elementWiseAddMatrix(this->biasHidden);
     temp2.map(sigmoidFunction);
-    Matrix<double> DJdb1 = Matrix<double>::multiply(DJdb2,weightT);
+    Matrix<double> DJdb1 = Matrix<double>::dot(DJdb2,weightT);
     DJdb1.elementWiseMultiplyMatrix(temp2);
 
     Matrix<double> DJdw2 = Matrix<double>::transpose(this->H);
-    DJdw2 = Matrix<double>::multiply(DJdw2,DJdb2);
+    DJdw2 = Matrix<double>::dot(DJdw2,DJdb2);
 
 
 
     Matrix<double> inputT = Matrix<double>::transpose(input);
-    Matrix<double> DJdw1 = Matrix<double>::multiply(inputT,DJdb1);
+    Matrix<double> DJdw1 = Matrix<double>::dot(inputT,DJdb1);
     DJdw1.elementWiseMulitpyScalar(this->learningRate);
     DJdw2.elementWiseMulitpyScalar(this->learningRate);
     DJdb1.elementWiseMulitpyScalar(this->learningRate);

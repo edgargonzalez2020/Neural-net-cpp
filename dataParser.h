@@ -61,7 +61,7 @@ Matrix<double> returnMatrixData(std::string fileName)
            k = 0;
            j++;
        }
-       tempMat.equals(j,k, static_cast<double>(normalizePixelData(data[i])) );
+       tempMat.set(j,k, static_cast<double>(normalizePixelData(data[i])) );
        k++;
    }
    return tempMat;

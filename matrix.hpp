@@ -22,12 +22,12 @@
 template <class T> class Matrix
 {
 public:
-    int validateRows(int userRows = 0);
-    int validateCols(int userCols = 0);
+    int validateRows(int userRows) const;
+    int validateCols(int userCols) const;
     Matrix();
     Matrix(int userRows,int userCols);
     Matrix(const Matrix<T>& a);
-    static Matrix<T> multiply(const Matrix<T>& a, const Matrix<T>& b);
+    static Matrix<T> dot(const Matrix<T>& a,const Matrix<T>& b);
     static Matrix<T> subtract(const Matrix<T>& a, const Matrix<T>& b);
     static Matrix<T> transpose(const Matrix<T>& a);
     static Matrix<T> map(const Matrix<T>& a,std::function<T (T)>& func);
@@ -37,9 +37,9 @@ public:
 
     void map(std::function<T (T)>& func);
     void redefineInternalMatrix(const std::vector<std::vector<T> >& a);
-    int getRows(){return rows;}
-    int getColumns(){return columns;}
-    void setRows(int row) {this->rows = row;}
+    int getRows()const{return rows;}
+    int getColumns()const{return columns;}
+    void setRows(int row){this->rows = row;}
     void setColumns(int col) {this->columns = col;}
     void elementWiseMultiplyMatrix(const Matrix<T>& a);
     void elementWiseMulitpyScalar(T n);
@@ -47,51 +47,92 @@ public:
     void elementWiseAddMatrix(const Matrix<T>& a);
     void elementWiseAddScalar(T n);
     void randomize();
-    void equals(int row, int column, T newVal);
+    void set(int row, int column, T newVal);
     void print();
-    T operator()(int row, int col)
-    const
+    /*!
+     * @details Returns the value of the Matrix at index i,j. Throws std::out_of_range exception if negative or out of bounds.
+     * @param row
+     * @param col
+     * @return Value of type T.
+     */
+    T operator()(int row, int col)const
     {
+        validateRows(row);
+        validateCols(col);
+        if(row > this->rows || col > this->columns) throw std::out_of_range("Matrix access out of bounds");
         return this->internalMatrix[row][col];
     }
+    /*!
+     * @details Overloaded operator [], this returns a row vector at index i, else if not possible throws std::out_of_range exception.
+     * @param i
+     * @return Matrix object of type T.
+     */
     Matrix<T> operator[](int i)
     {
       if(i < 0 || i > this->rows) throw std::out_of_range("Matric access out of bounds");
       Matrix<T> row = Matrix<T>::makeMatrixFromVec({this->internalMatrix[i]});
       return row;
     }
+     /*!
+     * @details Overloaded << operator to neatly print array contents.
+     * @tparam T
+     * @param stream
+     * @param a
+     * @return
+     */
+    friend std::ostream& operator<<(std::ostream& stream, const Matrix<T>& a)
+    {
+        for(int i = 0; i < a.getRows(); i++)
+        {
+            for(int j = 0; j < a.getColumns(); j++)
+            {
+                stream << a(i,j) << " ";
+            }
+            stream << std::endl;
+        }
+        return stream;
+    }
 
 private:
-    int rows;
-    int columns;
-    std::vector<std::vector<T> > internalMatrix;
+    int rows; /*!< Matrix rows */
+
+    int columns; /*!< Matrix columns */
+
+    std::vector<std::vector<T> > internalMatrix; /*!< Basis of entire Matrix class, every function revolves around this vector. */
 };
-/*
- * These two functions are to verify that the caller enters a valid dimension for a matrix
+/*! \brief Method that checks whether input rows is non-negative
  *
+ * @tparam T
+ * @param userRows
+ * @return Returns std::out_of_range exception if rows are non-negative.
  */
 template <typename T>
-int Matrix<T>::validateRows(int userRows)
+int Matrix<T>::validateRows(int userRows) const
 {
-    return userRows <= 0 ? 5: userRows; // arbitrarily return 5 if caller invokes a negative number
+    return userRows < 0 ? throw std::out_of_range("Matrix rows must be non-negative"): userRows;
 }
-template <typename T>
-int Matrix<T>::validateCols(int userCols)
-{
-    return userCols <= 0 ? 5: userCols; // arbitrarily return 5 if caller invokes a negative number
-}
-/*
- *  No argument constructor
+/*! \brief Method that checks whether input columns is non-negative
+ *
+ * @tparam T
+ * @param userCols
+ * @return Returns std::out_of_range exception if columns are non-negative.
  */
 template <typename T>
-Matrix<T>::Matrix()
+int Matrix<T>::validateCols(int userCols) const
 {
-    this->rows = validateRows();
-    this->columns = validateCols();
-    this->internalMatrix.resize(this->rows,std::vector<T>(this->columns,0)); //initialize all values to 0
+    return userCols < 0 ?  throw std::out_of_range("Matrix columns must be non-negative"):userCols;
 }
-/*
- *  Two argument constructor
+/*!
+ *  @brief Constructor that accepts no arguments
+ *  @details Invokes constructor with two arguments, default Matrix object will be 0x0.
+ */
+template <typename T>
+Matrix<T>::Matrix():Matrix(0,0){}
+/*!@brief Constructor that accepts two paramaters
+ * @details Constructor makes sure user arguments are correct by invoking validateRows and validateCols.
+ * @tparam T
+ * @param userRows
+ * @param userCols
  */
 template <typename T>
 Matrix<T>::Matrix(int userRows, int userCols)
@@ -105,26 +146,20 @@ Matrix<T>::Matrix(int userRows, int userCols)
  */
 template <typename T>
 Matrix<T>::Matrix(const Matrix<T>& a) = default;
-/*
- *  Method will return a matrix initialized to zeros if the product cannot be computed.
- *  This leaves the responsibility to the caller to make sure the
- *  result was meaningful, aka verify dims before invoking. Static versison
+/*!
+ * @details Method computes the dot product of two Matrix objects. If the dot product cannot be computed due to invalid dimension
+ *  will throw std::invalid_argument.
+ * @tparam T
+ * @param a Matrix object of type T
+ * @param b Matrix object of type T
+ * @return Returns a Matrix of type T or throws std::invalid_argument.
  */
 template <typename T>
-Matrix<T> Matrix<T>::multiply(const Matrix<T>& a, const Matrix<T>& b)
+Matrix<T> Matrix<T>::dot(const Matrix<T>& a,const Matrix<T>& b)
 {
-    try
+    if(a.getColumns() != b.getRows())
     {
-        if(a.columns != b.rows)
-        {
-            throw a;
-        }
-    }
-    catch(Matrix<T> a)
-    {
-        std::cout << "Cannot multiply matrices of different dims." << std::endl;
-        Matrix<T> temp;
-        return temp;
+        throw std::invalid_argument("Matrix dims cannot be multiplied");
     }
     Matrix<T> result(a.rows,b.columns);
 
@@ -136,38 +171,42 @@ Matrix<T> Matrix<T>::multiply(const Matrix<T>& a, const Matrix<T>& b)
             {
                 T current = result(i,j);
                 T sum = current + (a(i,k) * b(k,j));
-                result.equals(i,j,sum);
+                result.set(i,j,sum);
             }
         }
     }
     return result;
 }
-/*
- *  Returns the element wise difference of the Matrices.
- *  Will return Matrix of size a.rows x a.columns, initialized to zero if dims do not match
- *  responisbility of caller to verify rows and cols before invoking
+/*!
+ * @details Subtracts each individual element in a from b. Only possible if a and b have same dimensions, in that case method will
+ * throw std::invalid_argument
+ * @tparam T
+ * @param a Matrix object of type T
+ * @param b Matrix object of type T
+ * @return Returns Matrix object of type T or throws std::invalid_argument.
  */
 template <typename T>
 Matrix<T> Matrix<T>::subtract(const Matrix<T>& a, const Matrix<T>& b)
 {
     if(a.rows != b.rows || a.columns != b.columns)
     {
-        std::cout << "Matrix dims do not match" << std::endl;
-        Matrix<T> err(a.rows,a.columns);
-        return err;
+        throw std::invalid_argument("Matrix dims cannot be subtracted");
     }
     Matrix<T> temp(a.rows,a.columns);
     for(int i = 0; i < temp.getRows(); i++)
     {
         for(int j = 0; j < temp.getColumns(); j++)
         {
-            temp.equals(i, j, a(i,j) - b(i,j));
+            temp.set(i, j, a(i,j) - b(i,j));
         }
     }
     return temp;
 }
-/*
- *  Returns the transpose of a matrix, as a Matrix object.
+/*!
+ * @details Given a Matrix object, method will return the transpose. The return Matrxix will have the columns and rows flipped from the input.
+ * @tparam T
+ * @param a
+ * @return Matrix object of type T.
  */
 template <typename T>
 Matrix<T> Matrix<T>::transpose(const Matrix<T> &a)
@@ -178,14 +217,19 @@ Matrix<T> Matrix<T>::transpose(const Matrix<T> &a)
         for(int j = 0; j < a.columns; j++)
         {
             T val = a(i,j);
-            trasnpose.equals(j, i, val);
+            trasnpose.set(j, i, val);
         }
     }
     return trasnpose;
 
 }
-/*
- *  Returns a Matrix objects with the mapped values applied
+/*!
+ * @details Method utilizes std::function, it will apply a function to each element according to the function that is passed in.
+ * returns a Matrix object with the new values.
+ * @tparam T
+ * @param a
+ * @param func
+ * @return Returns Matrix object of type T.
  */
 template <typename T>
 Matrix<T> Matrix<T>::map(const Matrix<T>& a, std::function<T (T)>& func)
@@ -196,13 +240,16 @@ Matrix<T> Matrix<T>::map(const Matrix<T>& a, std::function<T (T)>& func)
         for(int j = 0; j < a.columns; j++)
         {
             T newVal = func(a(i,j));
-            temp.equals(i, j, newVal);
+            temp.set(i, j, newVal);
         }
     }
     return temp;
 }
-/*
- *  Maps a function to each element in the matrix
+/*!
+ * @details Method utilizes std::function, it will apply a function to each element according to the function that is passed in.
+ * This method, instead modifies the Matrix internally rather than returning a new object.
+ * @tparam T
+ * @param func
  */
 template <typename T>
 void Matrix<T>::map(std::function<T (T)>& func)
@@ -228,16 +275,18 @@ void Matrix<T>::redefineInternalMatrix(const std::vector<std::vector<T> >& a)
     this->setColumns(col);
     this->internalMatrix = a;
 }
-/*
- * Multiplies the matrices element wise, must be a Matrix object.
+/*!
+ * @details Multiplies each individual element from this object by each element in a. Modifies this object, operation will only
+ * work on matrices with same dimensions, otherwise will throw std::invalid_argument.
+ * @tparam T
+ * @param a
  */
 template <typename T>
 void Matrix<T>::elementWiseMultiplyMatrix(const Matrix<T>& a)
 {
     if(this->rows != a.rows || this->columns != a.columns)
     {
-        std::cout << "Cannot multiply matrices of different dims" << std::endl;
-        return;
+        throw std::invalid_argument("Matrix dims cannot be multiplied");
     }
     for(int i = 0; i < this->rows; i++)
     {
@@ -251,6 +300,12 @@ void Matrix<T>::elementWiseMultiplyMatrix(const Matrix<T>& a)
 /*
  * Mutliplies each element by a scalar value.
  */
+/*!
+ *
+ * @details Multiplies each element in this object by a scalar value.
+ * @tparam T, scalar to be multiplied.
+ * @param n
+ */
 template <typename T>
 void Matrix<T>::elementWiseMulitpyScalar(T n)
 {
@@ -263,9 +318,11 @@ void Matrix<T>::elementWiseMulitpyScalar(T n)
     }
 
 }
-/*
- *  Transforms Matrix object into a 1d array
- *
+
+/*!
+ * @details Transforms Matrix object into a 1 dimensional std::vector.
+ * @tparam T
+ * @return Returns std::vector of type T.
  */
 template <typename T>
 std::vector<T> Matrix<T>::toVec()
@@ -280,16 +337,18 @@ std::vector<T> Matrix<T>::toVec()
     }
     return temp;
 }
-/*
- * Adds the matrices element wise, must be a Matrix object.
+/*!
+ * @details Adds each element from this object from a. Addition will only work if dimension are the same, otherwise will
+ * throw std::invalid_argument.
+ * @tparam T
+ * @param a, Matrix to be added
  */
 template <typename T>
 void Matrix<T>::elementWiseAddMatrix(const Matrix<T>& a)
 {
     if(this->rows != a.rows || this->columns != a.columns)
     {
-        std::cout << "Cannot add matrices of different dims" << std::endl;
-        return;
+        throw std::invalid_argument("Matrix dims cannot be added");
     }
     for(int i = 0; i < this->rows; i++)
     {
@@ -300,8 +359,10 @@ void Matrix<T>::elementWiseAddMatrix(const Matrix<T>& a)
     }
 
 }
-/*
- * Adds each element by a scalar value.
+/*!
+ * @details Adds each element in this object by a scalar value.
+ * @tparam T
+ * @param n, scalar value to be added
  */
 template <typename T>
 void Matrix<T>::elementWiseAddScalar(T n)
@@ -315,9 +376,10 @@ void Matrix<T>::elementWiseAddScalar(T n)
     }
 
 }
-/*
- * Returns a matrix with elements to represent the weights of the Neural Network. Therefore
- * every value is 0 < x < 1, for some value x.
+/*!
+ * @details Utility function to help setup a random Matrix, modifies the object internally. If type T is a floating point it will
+ * default to values between 0 and 1, otherwise 0 and 10.
+ * @tparam T
  */
 template <typename T>
 void Matrix<T>::randomize()
@@ -335,32 +397,27 @@ void Matrix<T>::randomize()
 	  }
 	}
 }
-/*
- *  Function to allow matrix values to be manipulated.
+/*!
+ * @details Allows user to set values at specified indices. Method validated rows and columns, if a negative value
+ * is found throws std::out_of_range.
+ * @tparam T
+ * @param row
+ * @param column
+ * @param newValue
  */
 template <typename T>
-void Matrix<T>::equals(int row,int column, T newValue)
+void Matrix<T>::set(int row,int column, T newValue)
 {
+    validateRows(row);
+    validateCols(column);
+    if(row > this->rows || column > this->columns) throw std::out_of_range("Matrix access out of bounds");
     this->internalMatrix[row][column] = newValue;
 }
-/*
- *  Helper method to view elements in the matrix
- */
-template <typename T>
-void Matrix<T>::print()
-{
-    for(int i = 0; i < this->rows; i++)
-    {
-        for(int j = 0; j < this->columns; j++)
-        {
-            std::cout << this->internalMatrix[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-/*
- * Given a one dimensional std::vector it will 'flatten' it to a vector column
-
+/*!
+ * @details Given a 1 dimension std::vector, the method will 'flatten' the array and return a Matrix object column vector.
+ * @tparam T
+ * @param a
+ * @return Matrix object column vector.
  */
 template <typename T>
 Matrix<T> Matrix<T>::columnVector(const std::vector<T>& a)
@@ -368,10 +425,16 @@ Matrix<T> Matrix<T>::columnVector(const std::vector<T>& a)
   Matrix<T> column(static_cast<int>(a.size()),1);
   for(int i = 0; i < a.size(); i++)
   {
-    column.equals(i,0,a[i]);
+    column.set(i,0,a[i]);
   }
   return column;
 }
+/*!
+ * @details Given a 2 dimensional std::vector, method will return a Matrix object.
+ * @tparam T
+ * @param refVec
+ * @return Returns Matrix object of type T.
+ */
 template <typename T>
 Matrix<T> Matrix<T>::makeMatrixFromVec(const std::vector<std::vector<T> >& refVec)
 {
@@ -385,7 +448,7 @@ Matrix<T> Matrix<T>::makeMatrixFromVec(const std::vector<std::vector<T> >& refVe
             for(int j = 0; j < columnSize; j++)
             {
                 if(refVec[i].size() != columnSize) throw std::invalid_argument("All rows must have equal length");
-                temp.equals(i,j,refVec[i][j]);
+                temp.set(i,j,refVec[i][j]);
             }
 
         }
@@ -395,12 +458,20 @@ Matrix<T> Matrix<T>::makeMatrixFromVec(const std::vector<std::vector<T> >& refVe
 /*
  *	Given two matrix objects this function return the concatanation of botr matrices 
  */
+/*!
+ * @details Method will return the horizontal concatenation of two Matrix objects, if Matrix rows do not match,
+ * will throw std::invalid_argument
+ * @tparam T
+ * @param a
+ * @param b
+ * @return Returns Matrix object of type T.
+ */
 template <typename T>
 Matrix<T> Matrix<T>::horizontalConcat( Matrix<T>& a,  Matrix& b)
 {
 	if(a.getRows() != b.getRows())
 	{
-		throw std::range_error("Matrix rows must match for concatenation");
+		throw std::range_error("Matrix dims cannot be concatenated");
 	}
 	int newColSize = a.getColumns() + b.getColumns();
 	int loopCount = a.getColumns() + b.getColumns(); //loop through depending on the bigger size
@@ -417,11 +488,11 @@ Matrix<T> Matrix<T>::horizontalConcat( Matrix<T>& a,  Matrix& b)
 			{
 				if(i < a.getColumns())
 				{
-					temp.equals(j,i, a(j,i));
+					temp.set(j,i, a(j,i));
 				}
 				else
 				{
-					temp.equals(j,i, b(j,k));
+					temp.set(j,i, b(j,k));
 					k++;
 				}
 				i++;
@@ -439,11 +510,11 @@ Matrix<T> Matrix<T>::horizontalConcat( Matrix<T>& a,  Matrix& b)
 			{
 				if(i < a.getColumns())
 				{
-					temp.equals(j,i, a(j,i));
+					temp.set(j,i, a(j,i));
 				}
 				else
 				{
-					temp.equals(j,i, b(j,k));
+					temp.set(j,i, b(j,k));
 					k++;
 				}
 				i++;
@@ -456,5 +527,8 @@ Matrix<T> Matrix<T>::horizontalConcat( Matrix<T>& a,  Matrix& b)
 	}
 	return temp;
 }
+
+
+
 
 #endif /* matrix_hpp */

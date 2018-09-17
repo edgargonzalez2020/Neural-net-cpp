@@ -22,7 +22,7 @@ public:
     Matrix<double> predict(Matrix<double>& input);
     void setLearningRate(int newRate);
     double getLearningRate(){return learningRate;}
-    Matrix<double> feedForward(Matrix<double>& input);
+    Matrix<double> feedForward(const Matrix<double>& input);
     static std::function<double (double)> returnSigmoidFunction();
     static std::function<double (double)> returnDsigmoidFunction();
     void learn(Matrix<double>& a, Matrix<double>& b);

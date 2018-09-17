@@ -20,8 +20,6 @@ int main(int argc, const char * argv[])
     Matrix<double> outputs = Matrix<double>::makeMatrixFromVec({zeroes});
     for(int j = 0; j < 10; j++) {
         for (int i = 0; i < 1000; i++) {
-
-
             Matrix<double> oneRow = dataMatrix[i];
             nn.feedForward(oneRow);
             nn.learn(oneRow, outputs);
@@ -30,7 +28,7 @@ int main(int argc, const char * argv[])
 
     Matrix<double> testData = dataMatrix[1];
     Matrix<double> prediction = nn.feedForward(testData);
-    prediction.print();
+    std::cout << prediction <<std::endl;
     return 0;
 
 }
