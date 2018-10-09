@@ -1,4 +1,4 @@
-//
+
 //  matrix.hpp
 //  Neural Net
 //
@@ -454,6 +454,10 @@ Matrix<T> Matrix<T>::makeMatrixFromVec(const std::vector<std::vector<T> >& refVe
         }
         return temp;
     }
+    else
+    {
+        throw std::invalid_argument("Input paramater empty");
+    }
 }
 /*
  *	Given two matrix objects this function return the concatanation of botr matrices 
@@ -461,7 +465,9 @@ Matrix<T> Matrix<T>::makeMatrixFromVec(const std::vector<std::vector<T> >& refVe
 /*!
  * @details Method will return the horizontal concatenation of two Matrix objects, if Matrix rows do not match,
  * will throw std::invalid_argument
- * @tparam T
+ while (<#condition#>) {
+ <#statements#>
+ } * @tparam T
  * @param a
  * @param b
  * @return Returns Matrix object of type T.

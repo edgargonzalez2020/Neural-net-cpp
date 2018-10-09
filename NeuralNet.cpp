@@ -29,9 +29,11 @@ void NeuralNet::setLearningRate(int newRate)
     this->learningRate = newRate;
 }
 
-/*
- *  Returns a function to be used to map elements of Matrix object
- *  std::function takes in a single paramater double and returns a double
+
+/*!
+ * @details Convinience function that returns sigmoid
+ * @return std::function<double (double)>, a function that accepts a double and
+ * returns a double
  */
 std::function<double (double)> NeuralNet::returnSigmoidFunction()
 {
@@ -39,9 +41,10 @@ std::function<double (double)> NeuralNet::returnSigmoidFunction()
     sigmoidFnc = [](double x) { return 1 / (1 + exp(-x)); };
     return sigmoidFnc;
 }
-/*
- *  Returns a function to be used to map elements of a Matrix object.
- *  std::function takes in a single paramater double and returns a double
+/*!
+ * @details Convinience function that returns the derivitive of the sigmoid function
+ * @return std::function<double (double)>, a function that accepts a double and
+ * returns a double
  */
 std::function<double (double)> NeuralNet::returnDsigmoidFunction()
 {
@@ -49,79 +52,10 @@ std::function<double (double)> NeuralNet::returnDsigmoidFunction()
     dSigmoidFnc = [](double x) ->double{return exp(-x)/(pow(1+exp(-x),2));} ;
     return dSigmoidFnc;
 }
-// refactor training method by dividing work into seperate methods
-// void NeuralNet::feedForward(const Matrix& input,const Matrix& targets)
-// {
-//     Matrix<double> z1 = Matrix<double>::multiply(this->weights_input_hidden, input);
-//     std::function(double (double)) sigmoid = returnSigmoidFunction();
-//     z1.elementWiseAddMatrix(this->biasHidden);
-//     z1.map(sigmoid);
-//     Matrix<double> z2 = Matrix<double>::multiply(this->weights_hidden_output, outputs);
-//     Matrix.elementWiseAddMatrix(this->biasOutput);
-//     z2.map(sigmoid);
-// }
-// void Matrix<double>::backPropagation()
-// {
-    
-// }
-/*
- *  Trains the Neural Network by adjusting the weights matrix and biases
+/*!
+ * @details Forward propagation for the Neural Net, sets all the values of the Neural Net.
+ * @return Matrix<double>, the output of the network.
  */
-/*
-void NeuralNet::train(Matrix<double> &input,Matrix<double> &targets)
-{
-    printf("Input(%d,%d)\n",input.getRows(),input.getColumns());
-    printf("Targets(%d,%d)\n",targets.getRows(),targets.getColumns() );
-
-    std::function<double (double)> sigmoidFnc = this->returnSigmoidFunction();
-    std::function<double (double)> dSigmoidFnc = this->returnDsigmoidFunction();
-    Matrix<double> hiddenMatrix = Matrix<double>::multiply(this->weights_input_hidden,input);
-    hiddenMatrix.elementWiseAddMatrix(this->biasHidden);
-    hiddenMatrix.map(sigmoidFnc);
-    Matrix<double> outputs = Matrix<double>::multiply(this->weights_hidden_output, hiddenMatrix);
-    outputs.elementWiseAddMatrix(this->biasOutput);
-    outputs.map(sigmoidFnc);
-    Matrix<double> outputErrors = Matrix<double>::subtract(targets, outputs);
-    Matrix<double> gradients = Matrix<double>::map(outputs, dSigmoidFnc);
-    gradients.elementWiseMultiplyMatrix(outputErrors);
-    gradients.elementWiseMulitpyScalar(this->learningRate);
-    Matrix<double> hiddenTranspose = Matrix<double>::transpose(hiddenMatrix);
-
-    Matrix<double> hiddenOutputWeightDeltas = Matrix<double>::multiply(gradients, hiddenTranspose);
-    //adjust weights
-    this->weights_hidden_output.elementWiseAddMatrix(hiddenOutputWeightDeltas);
-    this->biasOutput.elementWiseAddMatrix(gradients);
-
-
-
-    Matrix<double> weights_hidden_outputT = Matrix<double>::transpose(this->weights_hidden_output);
-    Matrix<double> hiddenError = Matrix<double>::multiply(weights_hidden_outputT, outputErrors);
-
-    Matrix<double> hiddenGradient = Matrix<double>::map(hiddenMatrix, dSigmoidFnc);
-    hiddenGradient.elementWiseMultiplyMatrix(hiddenError);
-    hiddenGradient.elementWiseMulitpyScalar(this->learningRate);
-
-    Matrix<double> inputT = Matrix<double>::transpose(input);
-    Matrix<double> input_hidden_deltas = Matrix<double>::multiply(hiddenGradient, inputT);
-    this->weights_input_hidden.elementWiseAddMatrix(input_hidden_deltas);
-    this->biasHidden.elementWiseAddMatrix(hiddenGradient);
-}
-
-*/
-// Matrix<double> NeuralNet::predict(Matrix<double> &inputs)
-// {
-//     std::cout <<"--------------------------" << std::endl;
-//     printf("Input(%d,%d)\n",inputs.getRows(),inputs.getColumns());
-//     Matrix<double> hidden = Matrix<double>::multiply(this->weights_input_hidden, inputs);
-//     hidden.elementWiseAddMatrix(this->biasHidden);
-//     std::function<double (double)> sigmoidFnc = this->returnSigmoidFunction();
-//     hidden.map(sigmoidFnc);
-//     Matrix<double> outputs = Matrix<double>::multiply(this->weights_hidden_output, hidden);
-//     outputs.elementWiseAddMatrix(this->biasOutput);
-//     outputs.map(sigmoidFnc);
-//     return outputs;
-// }
-
 Matrix<double> NeuralNet::feedForward(const Matrix<double>& inputs)
 {
     std::function<double (double)> sigmoidFunction = returnSigmoidFunction();
@@ -134,11 +68,15 @@ Matrix<double> NeuralNet::feedForward(const Matrix<double>& inputs)
     Y.map(sigmoidFunction);
 	return Y;
 }
+/*!
+ * @details This function is how the network learns, using backpropagation and stochastic gradient desecent. This algorithm in particular uses the squared mean loss.
+ *
+ */
 void NeuralNet::learn(Matrix<double>& input,Matrix<double>& outputs)
 {
     std::function<double (double)> sigmoidFunction = returnDsigmoidFunction();
 
-
+    //computes the derivitive of the loss function with respect to the bias, output layer
     Matrix<double> DJdb2 = Matrix<double>::subtract(this->Y, outputs);
     Matrix<double> temp = Matrix<double>::dot(this->H, this->weights_hidden_output);
     temp.elementWiseAddMatrix(this->biasOutput);
@@ -146,7 +84,7 @@ void NeuralNet::learn(Matrix<double>& input,Matrix<double>& outputs)
     DJdb2.elementWiseMultiplyMatrix(temp);
 
 
-
+    //computes the derivitive of the loss function with respect to the bias, input layer
     Matrix<double> weightT = Matrix<double>::transpose(this->weights_hidden_output);
     Matrix<double> temp2 = Matrix<double>::dot(input,this->weights_input_hidden);
     temp2.elementWiseAddMatrix(this->biasHidden);
@@ -154,19 +92,46 @@ void NeuralNet::learn(Matrix<double>& input,Matrix<double>& outputs)
     Matrix<double> DJdb1 = Matrix<double>::dot(DJdb2,weightT);
     DJdb1.elementWiseMultiplyMatrix(temp2);
 
+    //computes derivitive of the loss function with respect to the weights of the output layer
     Matrix<double> DJdw2 = Matrix<double>::transpose(this->H);
     DJdw2 = Matrix<double>::dot(DJdw2,DJdb2);
 
 
-
+    //computes derivitive of the loss function with respect to the weights of the input layer
     Matrix<double> inputT = Matrix<double>::transpose(input);
     Matrix<double> DJdw1 = Matrix<double>::dot(inputT,DJdb1);
+    
+    //scale the derivitives by the learning rate
     DJdw1.elementWiseMulitpyScalar(this->learningRate);
     DJdw2.elementWiseMulitpyScalar(this->learningRate);
     DJdb1.elementWiseMulitpyScalar(this->learningRate);
     DJdb2.elementWiseMulitpyScalar(this->learningRate);
+    
+    //adjust the weights
     this->weights_input_hidden = Matrix<double>::subtract(this->weights_input_hidden, DJdw1);
     this->weights_hidden_output = Matrix<double>::subtract(this->weights_hidden_output, DJdw2);
     this->biasHidden = Matrix<double>::subtract(this->biasHidden, DJdb1);
     this->biasOutput = Matrix<double>::subtract(this->biasOutput, DJdb2);
+}
+
+
+void NeuralNet::saveModel()
+{
+    //TODO: Account for little endian and big endian machines 
+    std::ofstream stream;
+    stream.open("bias_hidden.nn", std::ios::binary);
+    // save values for biasHidden
+    int rows = biasHidden.getRows();
+    int cols = biasHidden.getColumns();
+    for(int i = 0; i < rows; i++)
+    {
+        for(int j = 0; j < cols; j++)
+        {
+            double val = biasHidden(i,j);
+        }
+    }
+}
+void NeuralNet::loadModel(std::string fileName)
+{
+    //TODO: Load file from local and set values 
 }

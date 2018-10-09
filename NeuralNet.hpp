@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <cmath>
+#include <fstream>
 #include "matrix.hpp"
 
 class NeuralNet
@@ -26,6 +27,8 @@ public:
     static std::function<double (double)> returnSigmoidFunction();
     static std::function<double (double)> returnDsigmoidFunction();
     void learn(Matrix<double>& a, Matrix<double>& b);
+    void loadModel(std::string fileName);
+    void saveModel();
 private:
     int input_nodes;
     int hidden_nodes;
