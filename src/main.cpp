@@ -7,8 +7,8 @@
 //
 
 #include <iostream>
-#include "matrix.hpp"
-#include "NeuralNet.hpp"
+#include "matrix.h"
+#include "NeuralNet.h"
 #include "dataParser.h"
 
 int main(int argc, const char * argv[])

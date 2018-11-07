@@ -8,7 +8,7 @@
 //
 #ifndef dataParser_h
 #define dataParser_h
-#include "matrix.hpp"
+#include "matrix.h"
 #include <iostream>
 #include <fstream>
 #include <vector>

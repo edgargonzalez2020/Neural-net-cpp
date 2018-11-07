@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <fstream>
-#include "matrix.hpp"
+#include "matrix.h"
 
 class NeuralNet
 {

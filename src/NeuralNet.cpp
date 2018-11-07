@@ -6,7 +6,7 @@
 //  Copyright © 2018 Edgar Gonzalez. All rights reserved.
 //
 
-#include "NeuralNet.hpp"
+#include "NeuralNet.h"
  NeuralNet::NeuralNet(int inputNodesA, int hiddenNodesA, int outputNodesA)
 {
 	
